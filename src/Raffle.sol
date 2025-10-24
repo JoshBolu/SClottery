@@ -63,13 +63,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint256 private immutable I_SUBSCRIPTION_ID;
     uint32 private immutable I_CALLBACK_GAS_LIMIT;
     address payable[] private players;
-    uint256 private lastTimeStamp;
+    uint256 public lastTimeStamp;
     address private recentWinner;
     RaffleState private raffleState;
 
     /* Events */
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed recentWinner);
+    event RequestRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 enteranceFee,
@@ -154,6 +155,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             })
         );
+        emit RequestRaffleWinner(requestId);
     }
 
     function fulfillRandomWords(
@@ -170,6 +172,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         players = new address payable[](0);
         lastTimeStamp = block.timestamp;
         emit WinnerPicked(recentWinner);
+        // just to stop the unused requestId error
+        emit RequestRaffleWinner(requestId);
 
         // Interactions(External Contract Interactions)
         // Sending balance to the winner
@@ -192,5 +196,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getPlayer(uint256 index) external view returns (address) {
         return players[index];
+    }
+
+    function getLastTimeStamp() external view returns (uint256) {
+        return lastTimeStamp;
+    }
+
+    function getRecentWinner() external view returns (address) {
+        return recentWinner;
     }
 }

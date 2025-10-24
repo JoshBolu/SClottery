@@ -103,7 +103,7 @@ contract RaffleTest is CodeConstants, Test {
         vm.roll(block.number + 1);
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         // Assert
         assert(!upkeepNeeded);
@@ -118,7 +118,7 @@ contract RaffleTest is CodeConstants, Test {
         raffle.performUpkeep("");
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         // Assert
         assert(!upkeepNeeded);
@@ -131,7 +131,7 @@ contract RaffleTest is CodeConstants, Test {
         raffle.enterRaffle{value: enteranceFee}();
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         // Assert
         assert(!upkeepNeeded);
@@ -144,7 +144,7 @@ contract RaffleTest is CodeConstants, Test {
         vm.roll(block.number + 1);
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
         // Assert
         assert(upkeepNeeded);
@@ -176,12 +176,7 @@ contract RaffleTest is CodeConstants, Test {
 
         // Act /assertvm.expectRevert
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Raffle.Raffle__UpkeepNotNeeded.selector,
-                currentBalance,
-                numPlayers,
-                rState
-            )
+            abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, currentBalance, numPlayers, rState)
         );
         raffle.performUpkeep("");
     }
@@ -195,10 +190,7 @@ contract RaffleTest is CodeConstants, Test {
         _;
     }
 
-    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId()
-        public
-        raffleEntered
-    {
+    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId() public raffleEntered {
         // Act
         vm.recordLogs();
         raffle.performUpkeep("");
@@ -222,33 +214,24 @@ contract RaffleTest is CodeConstants, Test {
     }
 
     // Failed forked test
-    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
-        uint256 randomNumber
-    ) public raffleEntered skipFork {
-        // Arrange / Act / Assert
-        vm.expectRevert();
-        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
-            randomNumber,
-            address(raffle)
-        );
-    }
-
-    // Failed forked test
-    function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney()
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256 randomNumber)
         public
         raffleEntered
         skipFork
     {
+        // Arrange / Act / Assert
+        vm.expectRevert();
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(randomNumber, address(raffle));
+    }
+
+    // Failed forked test
+    function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney() public raffleEntered skipFork {
         // Arrange
         uint256 additionalEntrants = 4;
         uint256 startingIndex = 1;
         address expectedWinner = address(1); // we know this because of the seed value given to the VRFCoordinatorV2Mock
 
-        for (
-            uint256 i = startingIndex;
-            i < startingIndex + additionalEntrants;
-            i++
-        ) {
+        for (uint256 i = startingIndex; i < startingIndex + additionalEntrants; i++) {
             // Casts uint256 `i` to uint160 then to address, creating unique test addresses (i=1 -> 0x...0001)
             // forge-lint: disable-next-line(unsafe-typecast)
             address newPlayer = address(uint160(i));
@@ -263,10 +246,7 @@ contract RaffleTest is CodeConstants, Test {
         raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[1].topics[1];
-        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
-            uint256(requestId),
-            address(raffle)
-        );
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(uint256(requestId), address(raffle));
 
         // Assert
         address recentWinner = raffle.getRecentWinner();
